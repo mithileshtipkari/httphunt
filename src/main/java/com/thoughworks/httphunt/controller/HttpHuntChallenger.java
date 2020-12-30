@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.thoughworks.httphunt.service.HttpService;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +35,8 @@ public class HttpHuntChallenger {
     @Autowired
     RestTemplateBuilder restTemplateBuilder;
     
-   
+    @Autowired
+    private HttpService httpService;
     
 //    {
 //        System.out.println("initializer");
@@ -140,5 +142,30 @@ String opResponse  = restTemplate.postForObject("https://http-hunt.thoughtworks-
             //op -{"message":"The answer is right! You can proceed to the next challenge by calling GET /challenge again!"}
         }
         return "mith";
+    }
+    
+    @GetMapping("/secondTest")
+    public String secondTest(){
+        String responseFromServer = "";
+        try{
+            //get input
+            String textToBeTested = httpService.getSecondInputFromServer();
+            System.out.println("textToBeTested ="+ textToBeTested);
+            
+            //do processing
+            ObjectMapper mapper = new ObjectMapper();
+            ObjectNode opNode = mapper.createObjectNode();
+            int countOfWords = textToBeTested.split(" ").length;
+            opNode.put("wordCount", countOfWords);
+            
+            //post it to output
+            responseFromServer = httpService.postTheOutput(opNode);
+            System.out.println("Response from server -"+ responseFromServer);
+            //{"message":"The answer is right! You can proceed to the next challenge by calling GET /challenge again!"}
+            
+        } catch(JsonProcessingException ex){
+            System.out.println("JsonProcessingException occured -"+ ex);
+        }
+        return responseFromServer;
     }
 }
