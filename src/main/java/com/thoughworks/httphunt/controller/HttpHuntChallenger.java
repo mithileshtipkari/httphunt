@@ -5,6 +5,10 @@
  */
 package com.thoughworks.httphunt.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -95,5 +99,46 @@ String opResponse  = restTemplate.postForObject("https://http-hunt.thoughtworks-
 //            System.out.println("op response -"+ mapp);
         }
         return input;
+    }
+    
+    @GetMapping("/testFirst")
+    public String testFirstUseCase() throws JsonProcessingException{
+        RestTemplate restTemplate = restTemplateBuilder.build();
+        
+        //get input from /input endpoint
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("userId", "alL1go0MB");
+        HttpEntity getEntity = new HttpEntity(headers);
+        
+//        ResponseEntity<String> response = restTemplate.exchange("http://localhost:8080/input", HttpMethod.GET, entity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange("https://http-hunt.thoughtworks-labs.net/challenge/input", HttpMethod.GET, getEntity, String.class);
+        String input = response.getBody();
+        System.out.println("input -"+ input);
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(response.getBody());
+        JsonNode text = root.path("text");
+        System.out.println("text - "+ text.asText());
+        String textToBeTested = text.asText();
+        if(textToBeTested != null){
+            int lenOfChars = textToBeTested.length();
+            System.out.println("len -"+ lenOfChars);
+            
+            //now do post request to /output endpoint with Json as {"count" : <actual count>}
+//            JsonNode countNode = 
+            ObjectNode countRoot = mapper.createObjectNode();
+            countRoot.put("count", lenOfChars);
+            
+            String jsonString = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(countRoot);
+            System.out.println("jsonString -"+ jsonString);
+            
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<JsonNode> postEntity = new HttpEntity<>(countRoot, headers);
+            String twURL = "https://http-hunt.thoughtworks-labs.net/challenge/output";
+            String localURL = "http://localhost:8990/output";
+            ResponseEntity<String> opResponseEntity = restTemplate.exchange(twURL, HttpMethod.POST, postEntity, String.class);
+            System.out.println("op -"+ opResponseEntity.getBody());
+            //op -{"message":"The answer is right! You can proceed to the next challenge by calling GET /challenge again!"}
+        }
+        return "mith";
     }
 }
