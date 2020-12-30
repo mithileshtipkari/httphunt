@@ -168,4 +168,35 @@ String opResponse  = restTemplate.postForObject("https://http-hunt.thoughtworks-
         }
         return responseFromServer;
     }
+    
+    @GetMapping("/thirdTest")
+    public String thirdTest(){
+        String responseFromServer = "";
+        try{
+            //get input
+            String textToBeTested = httpService.getSecondInputFromServer();
+//            String textToBeTested = "How often do you find yourself using an interrogation point in your everyday writing? What about an eroteme? You might be surprised to know that both of these appeared in the last two sentences. These terms might be unfamiliar, but you may know this punctuation mark by its more common name: the question mark. The question mark has a very simple function in writing—it indicates a question. If a sentence ends with a question mark, then it is asking a question, just as the name suggests.";
+            System.out.println("textToBeTested -"+ textToBeTested);
+            
+            //do processing - find no.of sentenses, sentense can end with ? . !, all sentenses except last are delimated by a space
+            ObjectMapper mapper = new ObjectMapper();
+            ObjectNode opNode = mapper.createObjectNode();
+            char[] charsToSearch = {'.', '?', '!'};
+            long sentenceCount = 0;
+            for(char c: charsToSearch){
+                sentenceCount += textToBeTested.chars().filter(t -> t == c).count();
+            }
+            System.out.println("len -"+ sentenceCount);
+            opNode.put("sentenceCount", sentenceCount);
+            
+            //post it to output
+            responseFromServer = httpService.postTheOutput(opNode);
+            System.out.println("Response from server -"+ responseFromServer);
+            //{"message":"The answer is right! You can proceed to the next challenge by calling GET /challenge again!"}
+            
+        } catch(Exception ex){
+            System.out.println("JsonProcessingException occured -"+ ex);
+        }
+        return responseFromServer;
+    }
 }
